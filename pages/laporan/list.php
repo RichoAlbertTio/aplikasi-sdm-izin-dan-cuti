@@ -488,7 +488,6 @@ $laporan = $conn->query("
             Company: "Perusahaan",
             Category: "Laporan",
             Keywords: "Cuti, Ijin, Laporan, SDM",
-            Comments: "Laporan data cuti dan ijin per personel yang digenerate pada " + new Date().toLocaleDateString('id-ID'),
             CreatedDate: new Date()
         };
         

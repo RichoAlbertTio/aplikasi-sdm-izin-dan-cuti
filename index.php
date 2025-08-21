@@ -89,33 +89,139 @@ require_once 'config/connect.php';
 
   <script>
     $(document).ready(function() {
-      // Hanya inisialisasi DataTables untuk tabel yang tidak menggunakan rowspan
-      var currentPage = window.location.pathname;
+      console.log('DataTable initialization started...');
       
-      if ($('#data').length && !$('#data tbody tr td[rowspan]').length) {
-        $('#data').DataTable({
-          lengthChange: false,
-          pageLength: 5,
-          dom: '<"row mb-3"<"col-md-6 d-flex align-items-center"B><"col-md-6 d-flex justify-content-end"f>>' +
-            'rt' +
-            '<"row mt-3"<"col-md-6 d-flex align-items-center"i><"col-md-6 d-flex justify-content-end"p>>',
-          buttons: [{
-              className: 'btn-success btn-sm me-2 rounded-2',
-              extend: 'excel',
-              text: 'Excel'
+      // Cek apakah halaman menggunakan tabel dengan rowspan (laporan)
+      var currentPage = window.location.href;
+      var hasRowspan = $('#data tbody tr td[rowspan]').length > 0;
+      
+      console.log('Current page:', currentPage);
+      console.log('Has rowspan:', hasRowspan);
+      console.log('Table found:', $('#data').length > 0);
+      
+      // Jika bukan halaman laporan dan tidak ada rowspan, inisialisasi DataTable
+      if (!currentPage.includes('laporan') && !hasRowspan && $('#data').length) {
+        console.log('Initializing DataTable...');
+        
+        try {
+          var table = $('#data').DataTable({
+            "responsive": true,
+            "lengthChange": true,
+            "autoWidth": false,
+            "pageLength": 10,
+            "searching": true,
+            "ordering": true,
+            "info": true,
+            "paging": true,
+            "processing": false,
+            "serverSide": false,
+            "language": {
+              "search": "Cari:",
+              "lengthMenu": "Tampilkan _MENU_ data per halaman",
+              "zeroRecords": "Tidak ada data yang ditemukan",
+              "info": "Menampilkan _START_ sampai _END_ dari _TOTAL_ data",
+              "infoEmpty": "Tidak ada data yang tersedia",
+              "infoFiltered": "(difilter dari _MAX_ total data)",
+              "paginate": {
+                "first": "Pertama",
+                "last": "Terakhir",
+                "next": "Selanjutnya",
+                "previous": "Sebelumnya"
+              },
+              "emptyTable": "Tidak ada data yang tersedia di tabel",
+              "loadingRecords": "Memuat...",
+              "processing": "Memproses..."
             },
-            {
-              className: 'btn-danger btn-sm me-2 rounded-2',
-              extend: 'pdf',
-              text: 'PDF'
-            },
-            {
-              className: 'btn-secondary btn-sm me-2 rounded-2',
-              extend: 'print',
-              text: 'Print'
-            }
-          ]
-        });
+            "dom": '<"row mb-3"<"col-md-6 d-flex align-items-center"B><"col-md-6 d-flex justify-content-end"f>>' +
+              'rt' +
+              '<"row mt-3"<"col-md-6 d-flex align-items-center"i><"col-md-6 d-flex justify-content-end"p>>',
+            "buttons": [
+              {
+                className: 'btn-success btn-sm me-2 rounded-2',
+                extend: 'excel',
+                text: 'Excel',
+                exportOptions: {
+                  columns: ':visible:not(:last-child)' // Exclude action column
+                }
+              },
+              {
+                className: 'btn-danger btn-sm me-2 rounded-2',
+                extend: 'pdf',
+                text: 'PDF',
+                exportOptions: {
+                  columns: ':visible:not(:last-child)' // Exclude action column
+                },
+                orientation: 'landscape',
+                pageSize: 'A4'
+              },
+              {
+                className: 'btn-secondary btn-sm me-2 rounded-2',
+                extend: 'print',
+                text: 'Print',
+                exportOptions: {
+                  columns: ':visible:not(:last-child)' // Exclude action column
+                }
+              }
+            ],
+            "columnDefs": [
+              {
+                "targets": -1, // Last column (Action)
+                "orderable": false,
+                "searchable": false,
+                "className": "no-export"
+              },
+              {
+                "targets": 0, // First column (No)
+                "orderable": true,
+                "searchable": false,
+                "width": "50px"
+              },
+              {
+                "targets": 1, // Nama Personel column - PASTIKAN BISA DICARI
+                "orderable": true,
+                "searchable": true,
+                "type": "string"
+              },
+              {
+                "targets": [2, 3, 4, 5], // Status, Keterangan, Berangkat, Kembali
+                "orderable": true,
+                "searchable": true
+              }
+            ],
+            "order": [[0, 'asc']], // Sort by No column by default
+            "searchCols": [
+              null, // No column - tidak dicari
+              null, // Nama Personel - bisa dicari (default)
+              null, // Status - bisa dicari (default)
+              null, // Keterangan - bisa dicari (default)  
+              null, // Berangkat - bisa dicari (default)
+              null, // Kembali - bisa dicari (default)
+              null  // Action - tidak dicari
+            ]
+          });
+          
+          console.log('DataTable initialized successfully');
+          console.log('Total rows:', table.rows().count());
+          
+          // Debug search functionality
+          $('.dataTables_filter input').on('keyup change', function() {
+            var searchValue = this.value;
+            console.log('Search input:', searchValue);
+            
+            // Trigger search dengan delay
+            setTimeout(function() {
+              var filteredRows = table.rows({search: 'applied'}).count();
+              console.log('Filtered rows:', filteredRows);
+            }, 100);
+          });
+          
+        } catch (error) {
+          console.error('Error initializing DataTable:', error);
+        }
+        
+      } else if (currentPage.includes('laporan') || hasRowspan) {
+        // Untuk halaman laporan dengan rowspan, disable DataTable
+        console.log('DataTable disabled for this page due to rowspan structure');
       }
     });
   </script>
